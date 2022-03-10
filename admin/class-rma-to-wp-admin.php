@@ -356,8 +356,8 @@ abstract class rmawp_meta_box {
         if ( array_key_exists( 'reviewAddress', $_POST ) ) {
             update_post_meta($post_id, '_reviewAddress_meta_key', $_POST['reviewAddress']);
         }
-		if ( array_key_exists( 'ReviewSubmittedBy', $_POST ) ) {
-            update_post_meta($post_id, '_ReviewSubmittedBy_meta_key', $_POST['ReviewSubmittedBy']);
+		if ( array_key_exists( 'reviewSubmittedBy', $_POST ) ) {
+            update_post_meta($post_id, '_reviewSubmittedBy_meta_key', $_POST['reviewSubmittedBy']);
         }
 		if ( array_key_exists( 'reviewRating', $_POST ) ) {
             update_post_meta($post_id, '_reviewRating_meta_key', $_POST['reviewRating']);
@@ -374,7 +374,7 @@ abstract class rmawp_meta_box {
      */
     public static function html( $post ) {
         $reviewAddress = get_post_meta( $post->ID, '_reviewAddress_meta_key', true );
-		$ReviewSubmittedBy = get_post_meta( $post->ID, '_ReviewSubmittedBy_meta_key', true );
+		$reviewSubmittedBy = get_post_meta( $post->ID, '_ReviewSubmittedBy_meta_key', true );
 		$reviewRating = get_post_meta( $post->ID, '_reviewRating_meta_key', true );
 		$reviewImageURL = get_post_meta( $post->ID, '_reviewImageURL_meta_key', true );
         ?>
@@ -384,8 +384,8 @@ abstract class rmawp_meta_box {
 				<th><label for="reviewAddress">Review Address</label></th>
 					<td><input type="text" name="reviewAddress" value="<?php echo $reviewAddress; ?>"></td>
 				</tr>
-				<th><label for="ReviewSubmittedBy">Review Submitted By</label></th>
-					<td><input type="text" name="ReviewSubmittedBy" value="<?php echo $ReviewSubmittedBy; ?>"></td>
+				<th><label for="reviewSubmittedBy">Review Submitted By</label></th>
+					<td><input type="text" name="reviewSubmittedBy" value="<?php echo $reviewSubmittedBy; ?>"></td>
 				</tr>
 
 				<tr>
