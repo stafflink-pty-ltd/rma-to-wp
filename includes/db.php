@@ -13,12 +13,12 @@ $table_name = $wpdb->prefix . 'rmawp_queue';
 $sql =
     "CREATE TABLE {$table_name} (
          `id` int(10) NOT NULL AUTO_INCREMENT,
-          `review_id` int(10) NOT NULL,
+          `review_id` text NOT NULL,
           `post_id` int(10) NULL,
           `review_modtime` int(20) NULL,
           `jsonstring` longtext NULL,
           `date_created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-          `type` enum('manual','auto') DEFAULT NULL,
+          `type` enum('review','sold', 'forsale') DEFAULT NULL,
           `status` enum('cancel', 'fail', 'pending','done') DEFAULT NULL,
           `status_message` text NULL, 
          PRIMARY KEY  (id)

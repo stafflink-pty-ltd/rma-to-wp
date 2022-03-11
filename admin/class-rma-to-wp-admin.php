@@ -374,7 +374,7 @@ abstract class rmawp_meta_box {
      */
     public static function html( $post ) {
         $reviewAddress = get_post_meta( $post->ID, '_reviewAddress_meta_key', true );
-		$reviewSubmittedBy = get_post_meta( $post->ID, '_ReviewSubmittedBy_meta_key', true );
+		$reviewSubmittedBy = get_post_meta( $post->ID, '_reviewSubmittedBy_meta_key', true );
 		$reviewRating = get_post_meta( $post->ID, '_reviewRating_meta_key', true );
 		$reviewImageURL = get_post_meta( $post->ID, '_reviewImageURL_meta_key', true );
         ?>
