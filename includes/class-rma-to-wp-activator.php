@@ -30,7 +30,13 @@ class Rma_To_Wp_Activator {
 	 * @since    1.0.0
 	 */
 	public static function activate() {
-
+		require 'db.php';
+		if(!get_option('rmawp_temp_token_age')){
+			add_option('rmawp_temp_token_age', 0 );
+		}
+		if(!get_option('rmawp_temp_token')){
+			add_option('rmawp_temp_token', 0 );
+		}
 	}
 
 }

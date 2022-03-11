@@ -29,3 +29,12 @@
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
+
+// asks user if they want to execute the below before removing
+if (!get_option('plugin_do_uninstall', false)) exit;
+
+// delete plugin options data from db
+$options = ['rmawp_temp_token', 'rmawp_temp_token_age'];
+foreach ($options as $option) {
+	if (get_option($option)) delete_option($option);
+}

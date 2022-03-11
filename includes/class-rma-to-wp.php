@@ -115,12 +115,19 @@ class Rma_To_Wp {
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-rma-to-wp-admin.php';
-
+		
+		/**
+		 * Custom functions
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/get-reviews.php';
+		
 		/**
 		 * The class responsible for defining all actions that occur in the public-facing
 		 * side of the site.
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-rma-to-wp-public.php';
+
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-rma-to-wp-queue.php';
 
 		$this->loader = new Rma_To_Wp_Loader();
 
