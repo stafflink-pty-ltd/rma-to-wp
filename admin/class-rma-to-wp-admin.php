@@ -249,6 +249,7 @@ add_action( 'admin_init', 'rma_wp_settings_init' );
 function rmawp_section_developers_callback( $args ) {
     ?>
     <p id="<?php echo esc_attr( $args['id'] ); ?>"><a href="https://go.ratemyagent.com.au/api" target="_blank">Don't have an API key yet? Click here.</a></p>
+	<p><a href="/wp-admin/admin-ajax.php?action=get_reviews_from_api"> Import all reviews</a>
     <?php
 }
 
@@ -365,6 +366,9 @@ abstract class rmawp_meta_box {
 		if ( array_key_exists( 'reviewImageURL', $_POST ) ) {
             update_post_meta($post_id, '_reviewImageURL_meta_key', $_POST['reviewImageURL']);
         }
+		if ( array_key_exists( 'reviewID', $_POST ) ) {
+            update_post_meta($post_id, '_reviewID_meta_key', $_POST['reviewID']);
+        }
     }
 
     /**
@@ -377,6 +381,7 @@ abstract class rmawp_meta_box {
 		$reviewSubmittedBy = get_post_meta( $post->ID, '_reviewSubmittedBy_meta_key', true );
 		$reviewRating = get_post_meta( $post->ID, '_reviewRating_meta_key', true );
 		$reviewImageURL = get_post_meta( $post->ID, '_reviewImageURL_meta_key', true );
+		$reviewID = get_post_meta( $post->ID, '_reviewID_meta_key', true );
         ?>
 		<table>
 			<tbody>
@@ -395,6 +400,10 @@ abstract class rmawp_meta_box {
 				<tr>
 					<th><label for="reviewImageURL">Review Image URL</label></th>
 					<td><input type="text" name="reviewImageURL" value="<?php echo $reviewImageURL; ?>"></td>
+				</tr>
+				<tr>
+					<th><label for="reviewID">Review ID</label></th>
+					<td><input type="text" name="reviewID" value="<?php echo $reviewID; ?>"></td>
 				</tr>
 			</tbody>
 		</table>

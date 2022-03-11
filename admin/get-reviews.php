@@ -86,9 +86,14 @@ function explode_id($url) {
     return $id;
 }
 
+add_action('wp_ajax_nopriv_get_reviews_from_api', 'get_reviews_from_api');
+add_action('wp_ajax_get_reviews_from_api', 'get_reviews_from_api');
 function get_reviews_from_api() {
 
     global $wpdb;
+    rmawp_token_update();
+
+    $skip = ( !empty( $_POST['skip'] ) ) ? $_POST['skip'] : 0;
 
     $options = get_option('rmawp_options');
     $endpoint = 'https://developers.ratemyagent.com.au/agent/';
@@ -97,8 +102,6 @@ function get_reviews_from_api() {
 
     $url = $endpoint.$options['rmawp_agent_id'].$after;
 
-	rmawp_token_update();
-
     $headers = [
         'headers' => [
             'Content-Type' => 'application/json',
@@ -106,72 +109,69 @@ function get_reviews_from_api() {
         ]
     ];
 
-    $total = wp_remote_retrieve_body(wp_remote_get( $url, $headers ));
-    $total = json_decode($total);
-    $review_count = $total->Total;
-    $skip = 0;
+    if(!empty($_POST['review_count']) ) {
+        $review_count = $_POST['review_count'];
+    } else {
+        $total = wp_remote_retrieve_body(wp_remote_get( $url, $headers ));
+        $total = json_decode($total);
+        $review_count = $total->Total;
+    }
+
     $i = 0;
 
     $sync = new RmaWP\Sync\Queue();
 
-    while ($review_count > 0 ) {
-        
-        $results = json_decode(wp_remote_retrieve_body(wp_remote_get( $url.'?skip='.$skip.'&take=10', $headers )));
-        $count = count($results->Results);
+    $results = json_decode(wp_remote_retrieve_body(wp_remote_get( $url.'?skip='.$skip.'&take=10', $headers )));
+    $count = count($results->Results);
 
-        foreach( $results->Results as $result ) {
+    foreach( $results->Results as $result ) {
 
-            $review_id = explode_id($result->ReviewUrl);
-            $json = (array) $result;
-            $json = json_encode($json);
-            $like = '%' . $wpdb->esc_like( $review_id ) . '%';
-            $result = $wpdb->get_row("SELECT * FROM {$table_name} WHERE review_id LIKE '%".$review_id."%' ");
+        $review_id = explode_id($result->ReviewUrl);
+        $json = (array) $result;
+        $json = json_encode($json);
+        $like = '%' . $wpdb->esc_like( $review_id ) . '%';
+        $result = $wpdb->get_row("SELECT * FROM {$table_name} WHERE review_id LIKE '%".$review_id."%' ");
 
-            if ( is_null($result) ) {
-                $sync->insert($review_id, $json, 'review', 'pending');
-                $i++;
-            }
-
+        if ( is_null($result) ) {
+            $sync->insert($review_id, $json, 'review', 'pending');
+            $i++;
         }
-
-        $review_count = $review_count - $count;
-        $skip = $skip + $count;
 
     }
 
-    if($i >= 1 ) {
-        error_log($i . ' reviews found. queued for processing.');
-        return true;
-    } else {
-        error_log($i . ' reviews found.', 0);
+    $review_count = $review_count - $count;
+    $skip = $skip + $count;
+
+    error_log($review_count, 0);
+    if ($review_count == 0) {
+        error_log('All reviews accounted for. Starting post generation...', 0);
+        process_reviews();
         return false;
     }
 
-
-
-    
-    
-    // if( ! is_array( $results ) || empty( $results ) ) {
-    //     return false;
-    // }
-
-    // $current_page = $current_page + 10;
-    // wp_remote_post( admin_url('admin-ajax.php?action=get_reviews_from_api'), [
-    //     'blocking' => false, 
-    //     'sslverify' => false,
-    //     'body' => [
-    //         'current_page' => $current_page,
-    //         'review_count' => $review_count
-    //     ]
-    // ] );
+    wp_remote_post( admin_url('admin-ajax.php?action=get_reviews_from_api'), [
+        'blocking' => false, 
+        'sslverify' => false,
+        'body' => [
+            'skip' => $skip,
+            'review_count' => $review_count
+        ]
+    ]);
 
 }
 
+add_action('wp_ajax_nopriv_process_reviews', 'process_reviews');
+add_action('wp_ajax_process_reviews', 'process_reviews');
 function process_reviews() {
     
     global $wpdb;
 
     $reviews = $wpdb->get_results( $wpdb->prepare("SELECT *, review_id FROM wp_rmawp_queue WHERE status = 'pending' LIMIT 5") );
+
+    if( empty($reviews) ) {
+        error_log('all reviews imported.');
+        return false;
+    }
 
     foreach($reviews as $review ) {
         $review = (array) $review;
@@ -190,18 +190,54 @@ function process_reviews() {
         $post_id = wp_insert_post( $review_data );
         $attach_id = upload_image($json->PropertyCoverImage);
         set_post_thumbnail( $post_id, $attach_id );
-        update_post_meta($post_id, '_reviewAddress_meta_key', $json->StreetAddress.', '.$json->Suburb.' '.$json->State.' '.$json->Postcode);
-        update_post_meta($post_id, '_reviewSubmittedBy_meta_key', $json->ReviewerName );
-        update_post_meta($post_id, '_reviewRating_meta_key', $json->StarRating );
-        update_post_meta($post_id, '_reviewImageURL_meta_key', $json->ReviewUrl );
 
-            $data = [
-                'post_id' => $post_id,
-                'review_modtime' => $json->ReviewedOn,
-                'status' => 'done'
-            ];
-            $wpdb->update($wpdb->prefix.'rmawp_queue', $data, ['review_id' => $review['review_id']]);
+        $review_meta = [
+            '_reviewAddress_meta_key' => $json->StreetAddress.', '.$json->Suburb.' '.$json->State.' '.$json->Postcode,
+            '_reviewSubmittedBy_meta_key' => $json->ReviewerName,
+            '_reviewRating_meta_key' => $json->StarRating,
+            '_reviewImageURL_meta_key' => $json->ReviewUrl,
+            '_reviewID_meta_key' => $review['review_id']
+        ];
 
+        foreach( $review_meta as $key => $meta ) {
+            update_post_meta($post_id, $key, $meta);
+        }
+
+        $data = [
+            'post_id' => $post_id,
+            'review_modtime' => $json->ReviewedOn,
+            'status' => 'done'
+        ];
+        $wpdb->update($wpdb->prefix.'rmawp_queue', $data, ['review_id' => $review['review_id']]);
+        error_log('review_id '.$post_id.' updated.', 0);
     }
 
+    error_log('round of reviews imported...doing another 5', 0);
+    wp_remote_post( admin_url('admin-ajax.php?action=process_reviews'), [
+        'blocking' => false, 
+        'sslverify' => false
+    ]);
+
+
 }
+
+/**
+ * Making this work automatically
+ * 
+ * 1.) get_reviews_from_api() Gets ALL reviews. Imports only new reviews. 
+ *              Get current reviews and if they don't exist in the request, delete from wp
+ *              Add a cron so it updates every 24 hours
+ * 
+ * 2.) process_reviews() Gets reviews from db and imports them into a post.
+ *      TODO: 
+ *              store json in a field just in case new fields are added to the api
+ * 
+ *  ISSUES:
+ *      API doesn't have:
+ *          Unique ID's
+ *          Last modified time doesn't exist (Does it need to? do reviews ever update?)
+ *          Does expiry of review matter?
+ *          pagination (have to use skip + take)
+ * 
+ *              
+ */

@@ -29,7 +29,7 @@ class Queue{
         global $wpdb;
 
 
-        $wpdb->update($wpdb->prefix.self::$table_name, $data, ['id' => $row_id]);
+        $wpdb->update($wpdb->prefix.self::$table_name, $data, ['review_id' => $row_id]);
     }
 
     static function get($id){
