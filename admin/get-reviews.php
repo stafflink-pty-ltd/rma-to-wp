@@ -96,7 +96,7 @@ function get_reviews_from_api() {
     $skip = ( !empty( $_POST['skip'] ) ) ? $_POST['skip'] : 0;
 
     $options = get_option('rmawp_options');
-    $endpoint = 'https://developers.ratemyagent.com.au/agent/';
+    $endpoint = 'https://developers.ratemyagent.com.au/agency/';
     $after = '/sales/reviews';
     $table_name = $wpdb->prefix.'rmawp_queue';
 
@@ -142,9 +142,9 @@ function get_reviews_from_api() {
     $review_count = $review_count - $count;
     $skip = $skip + $count;
 
-    error_log($review_count, 0);
+    error_log('Priming Reviews: '.$review_count. ' remaining...', 0);
     if ($review_count == 0) {
-        error_log('All reviews accounted for. Starting post generation...', 0);
+        error_log('All reviews primed in DB. Starting post generation...', 0);
         process_reviews();
         return false;
     }
@@ -160,56 +160,69 @@ function get_reviews_from_api() {
 
 }
 
-add_action('wp_ajax_nopriv_process_reviews', 'process_reviews');
-add_action('wp_ajax_process_reviews', 'process_reviews');
+
+/**
+ * Import review data from rmawp_queue DB table into WP posts.
+ * Does not accept any arguments.
+ */
 function process_reviews() {
     
     global $wpdb;
 
-    $reviews = $wpdb->get_results( $wpdb->prepare("SELECT *, review_id FROM wp_rmawp_queue WHERE status = 'pending' LIMIT 5") );
+    $reviews = $wpdb->get_results($wpdb->prepare("SELECT *, review_id FROM wp_rmawp_queue WHERE status = 'pending' LIMIT 5") );
 
-    if( empty($reviews) ) {
-        error_log('all reviews imported.');
-        return false;
-    }
+    if( empty( $reviews ) ) return false;
 
-    foreach($reviews as $review ) {
+    foreach( $reviews as $review ) {
+
         $review = (array) $review;
+        $json = json_decode( $review['jsonstring'] );
+        $attach_id = upload_image($json->PropertyCoverImage);
+        $meta = [];
+        
+        // Add identifier to key and change objects to array's and remove sub arrays
+        foreach( $json as $key => $value ) { 
+            if( is_object($value)) {
+                foreach($value as $key => $subarray) {
+                    $meta['_rmaReview_'.$key] = $subarray;
+                }
+            } else {
+                $meta['_rmaReview_'.$key] = $value; 
+            } 
+        }
 
-        $json = json_decode($review['jsonstring']);
-
-        $review_data = [
+        $post_id = wp_insert_post([
             'post_type' => 'rma-reviews',
             'post_title'    => $json->Title,
             'post_content'  => $json->Description,
             'post_status'   => 'publish',
             'post_author'   => 1,
-            'post_date' => $json->ReviewedOn
+            'post_date' => $json->ReviewedOn,
+            'meta_input' => $meta,
+            '_thumbnail_id' => $attach_id
+        ]);
+
+        $taxonomies = [
+            'rma_agent' => $json->Agent->Name,
+            'review_type' => $json->ReviewerType
         ];
 
-        $post_id = wp_insert_post( $review_data );
-        $attach_id = upload_image($json->PropertyCoverImage);
-        set_post_thumbnail( $post_id, $attach_id );
-
-        $review_meta = [
-            '_reviewAddress_meta_key' => $json->StreetAddress.', '.$json->Suburb.' '.$json->State.' '.$json->Postcode,
-            '_reviewSubmittedBy_meta_key' => $json->ReviewerName,
-            '_reviewRating_meta_key' => $json->StarRating,
-            '_reviewImageURL_meta_key' => $json->ReviewUrl,
-            '_reviewID_meta_key' => $review['review_id']
-        ];
-
-        foreach( $review_meta as $key => $meta ) {
-            update_post_meta($post_id, $key, $meta);
+        foreach ( $taxonomies as $key => $tax ) {
+            $term = get_term_by('name', $tax, $key);
+            if( $term != false ) {
+                wp_set_object_terms($post_id, $term->term_id, $key);
+            } else {
+                $term = wp_insert_term($tax, $key);
+                wp_set_object_terms($post_id, $term['term_id'], $key);
+            }
         }
 
-        $data = [
-            'post_id' => $post_id,
-            'review_modtime' => $json->ReviewedOn,
-            'status' => 'done'
-        ];
-        $wpdb->update($wpdb->prefix.'rmawp_queue', $data, ['review_id' => $review['review_id']]);
-        error_log('review_id '.$post_id.' updated.', 0);
+        $wpdb->update(
+            $wpdb->prefix.'rmawp_queue', 
+            ['post_id' => $post_id, 'review_modtime' => $json->ReviewedOn, 'status' => 'done'],
+            ['review_id' => $review['review_id']]
+        );
+
     }
 
     error_log('round of reviews imported...doing another 5', 0);
@@ -218,8 +231,9 @@ function process_reviews() {
         'sslverify' => false
     ]);
 
-
 }
+add_action('wp_ajax_nopriv_process_reviews', 'process_reviews');
+add_action('wp_ajax_process_reviews', 'process_reviews');
 
 /**
  * Making this work automatically

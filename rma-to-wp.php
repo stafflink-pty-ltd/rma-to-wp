@@ -9,7 +9,7 @@
  * that starts the plugin.
  *
  * @link              https://www.linkedin.com/in/matthew-neal-1ba40997/
- * @since             1.0.0
+ * @since             1.0.1
  * @package           Rma_To_Wp
  *
  * @wordpress-plugin

@@ -179,11 +179,45 @@ class register_custom_content {
 		];
 		register_taxonomy( "rma_agent", [ "rma-reviews" ], $args );
 	}
+
+	public function register_review_type() {
+	
+		/**
+		 * Taxonomy: RMA Agents.
+		 */
+	
+		$labels = [
+			"name" => __( "Review Types", "custom-post-type-ui" ),
+			"singular_name" => __( "Review Type", "custom-post-type-ui" ),
+		];
+		
+		$args = [
+			"label" => __( "Review Types", "custom-post-type-ui" ),
+			"labels" => $labels,
+			"public" => false,
+			"publicly_queryable" => false,
+			"hierarchical" => false,
+			"show_ui" => true,
+			"show_in_menu" => true,
+			"show_in_nav_menus" => false,
+			"query_var" => true,
+			"rewrite" => [ 'slug' => 'review_type', 'with_front' => true, ],
+			"show_admin_column" => false,
+			"show_in_rest" => true,
+			"show_tagcloud" => false,
+			"rest_base" => "review_type",
+			"rest_controller_class" => "WP_REST_Terms_Controller",
+			"show_in_quick_edit" => false,
+			"show_in_graphql" => false,
+		];
+		register_taxonomy( "review_type", [ "rma-reviews" ], $args );
+	}
 	
 	
 	public function init() {
 		add_action( 'init', [ $this, 'register_taxonomy' ] );
 		add_action( 'init', [ $this, 'register_cpt'] );
+		add_action( 'init', [ $this, 'register_review_type'] );
 	}
 }
 
@@ -377,37 +411,22 @@ abstract class rmawp_meta_box {
 	 * @param \WP_Post $post   Post object.
      */
     public static function html( $post ) {
-        $reviewAddress = get_post_meta( $post->ID, '_reviewAddress_meta_key', true );
-		$reviewSubmittedBy = get_post_meta( $post->ID, '_reviewSubmittedBy_meta_key', true );
-		$reviewRating = get_post_meta( $post->ID, '_reviewRating_meta_key', true );
-		$reviewImageURL = get_post_meta( $post->ID, '_reviewImageURL_meta_key', true );
-		$reviewID = get_post_meta( $post->ID, '_reviewID_meta_key', true );
-        ?>
-		<table>
-			<tbody>
-				<tr>
-				<th><label for="reviewAddress">Review Address</label></th>
-					<td><input type="text" name="reviewAddress" value="<?php echo $reviewAddress; ?>"></td>
-				</tr>
-				<th><label for="reviewSubmittedBy">Review Submitted By</label></th>
-					<td><input type="text" name="reviewSubmittedBy" value="<?php echo $reviewSubmittedBy; ?>"></td>
-				</tr>
 
+		$review_meta = get_post_meta(get_the_ID());
+		$return = '<table><tbody>';
+
+		foreach( $review_meta as $key => $value ) {
+			if ( substr( $key, 0, 11) == '_rmaReview_' ) {
+				$return .= '
 				<tr>
-        			<th><label for="reviewRating">Review Rating</label></th>
-					<td><input type="text" name="reviewRating" value="<?php echo $reviewRating; ?>"></td>
-				</tr>
-				<tr>
-					<th><label for="reviewImageURL">Review Image URL</label></th>
-					<td><input type="text" name="reviewImageURL" value="<?php echo $reviewImageURL; ?>"></td>
-				</tr>
-				<tr>
-					<th><label for="reviewID">Review ID</label></th>
-					<td><input type="text" name="reviewID" value="<?php echo $reviewID; ?>"></td>
-				</tr>
-			</tbody>
-		</table>
-        <?php
+					<th><label for="'.$key.'">'.$key.'</label></th>
+					<td><input type="text" name="'.$key.'" value="'.$value[0].'"></td>
+				</tr>';
+			}
+		}
+		$return .= '</tbody></table>';
+		echo $return;
+
     }
 
 }
