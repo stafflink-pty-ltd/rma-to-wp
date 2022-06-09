@@ -129,6 +129,8 @@ class Rma_To_Wp {
 
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-rma-to-wp-queue.php';
 
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/slider-review-shortcode.php';
+
 		$this->loader = new Rma_To_Wp_Loader();
 
 	}

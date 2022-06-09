@@ -28,5 +28,22 @@
 	 * Although scripts in the WordPress core, Plugins and Themes may be
 	 * practising this, we should strive to set a better example in our own work.
 	 */
+// Add slider initialisation here.
+var splider = new Splide( '.splide', {
+	type   : 'loop',
+	perPage: 3,
+	perMove: 3,
+	rewind: true,
+	pagination: false,
+	gap: 20,
+	breakpoints: {
+		768: {
+			perPage: 1,
+		},
+		991: {
+			perPage: 2,
+		}
+	}
+} ).mount();
 
 })( jQuery );

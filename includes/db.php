@@ -17,6 +17,7 @@ $sql =
           `post_id` int(10) NULL,
           `review_modtime` int(20) NULL,
           `jsonstring` longtext NULL,
+          `agent_json` longtext NULL,
           `date_created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
           `type` enum('review','sold', 'forsale') DEFAULT NULL,
           `status` enum('cancel', 'fail', 'pending','done') DEFAULT NULL,

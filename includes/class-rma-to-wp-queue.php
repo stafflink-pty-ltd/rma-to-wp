@@ -1,10 +1,10 @@
 <?php
 namespace RmaWP\Sync;
 
-class Queue{
+class Queue {
+
     const TYPE_MANUAL = 'manual';
     const TYPE_AUTO = 'auto';
-
     const STATUS_PENDING = 'pending';
     const STATUS_CANCEL = 'cancel';
     const STATUS_FAIL = 'fail';
@@ -12,14 +12,15 @@ class Queue{
 
     static $table_name = 'rmawp_queue';
 
-    static function insert($review_id, $jsonstring, $type, $status = Queue::STATUS_PENDING){
+    static function insert($review_id, $jsonstring, $type, $status = Queue::STATUS_PENDING, $agent_json) {
         global $wpdb;
 
         $wpdb->insert($wpdb->prefix.self::$table_name, [
             'review_id' => $review_id,
             'jsonstring' => $jsonstring,
             'type' => $type,
-            'status' => $status
+            'status' => $status,
+            'agent_json' => $agent_json
         ]);
 
         return $wpdb->insert_id;

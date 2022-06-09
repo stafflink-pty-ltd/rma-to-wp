@@ -144,6 +144,41 @@ class register_custom_content {
 		];
 	
 		register_post_type( "rma-reviews", $args );
+
+		/**
+		 * Post Type: RMA Reviews.
+		 */
+	
+		$labels = [
+			"name" => __( "RMA Agents", "custom-post-type-ui" ),
+			"singular_name" => __( "RMA Agent", "custom-post-type-ui" ),
+		];
+	
+		$args = [
+			"label" => __( "RMA Agents", "custom-post-type-ui" ),
+			"labels" => $labels,
+			"description" => "",
+			"public" => true,
+			"publicly_queryable" => true,
+			"show_ui" => true,
+			"show_in_rest" => true,
+			"rest_base" => "",
+			"rest_controller_class" => "WP_REST_Posts_Controller",
+			"has_archive" => false,
+			"show_in_menu" => true,
+			"show_in_nav_menus" => true,
+			"delete_with_user" => false,
+			"exclude_from_search" => false,
+			"capability_type" => "post",
+			"map_meta_cap" => true,
+			"hierarchical" => false,
+			"rewrite" => [ "slug" => "rma-agents", "with_front" => true ],
+			"query_var" => true,
+			"supports" => [ "title", "editor", "thumbnail" ],
+			"show_in_graphql" => false,
+		];
+	
+		register_post_type( "rma-agents", $args );
 	}
 	
 	public function register_taxonomy() {
@@ -378,31 +413,8 @@ abstract class rmawp_meta_box {
             'rmawp_box_id',
             'Rate My Agent To WordPress Fields',
             [ self::class, 'html' ],
-            ['rma-reviews']
+            ['rma-reviews', 'rma-agents']
         );
-    }
-
-    /**
-     * Save the meta box selections.
-     *
-     * @param int $post_id  The post ID.
-     */
-    public static function save( int $post_id ) {
-        if ( array_key_exists( 'reviewAddress', $_POST ) ) {
-            update_post_meta($post_id, '_reviewAddress_meta_key', $_POST['reviewAddress']);
-        }
-		if ( array_key_exists( 'reviewSubmittedBy', $_POST ) ) {
-            update_post_meta($post_id, '_reviewSubmittedBy_meta_key', $_POST['reviewSubmittedBy']);
-        }
-		if ( array_key_exists( 'reviewRating', $_POST ) ) {
-            update_post_meta($post_id, '_reviewRating_meta_key', $_POST['reviewRating']);
-        }
-		if ( array_key_exists( 'reviewImageURL', $_POST ) ) {
-            update_post_meta($post_id, '_reviewImageURL_meta_key', $_POST['reviewImageURL']);
-        }
-		if ( array_key_exists( 'reviewID', $_POST ) ) {
-            update_post_meta($post_id, '_reviewID_meta_key', $_POST['reviewID']);
-        }
     }
 
     /**
@@ -416,7 +428,7 @@ abstract class rmawp_meta_box {
 		$return = '<table><tbody>';
 
 		foreach( $review_meta as $key => $value ) {
-			if ( substr( $key, 0, 11) == '_rmaReview_' ) {
+			if ( substr( $key, 0, 11) == '_rmaReview_' || substr( $key, 0, 10) == '_rmaAgent_') {
 				$return .= '
 				<tr>
 					<th><label for="'.$key.'">'.$key.'</label></th>
@@ -431,4 +443,3 @@ abstract class rmawp_meta_box {
 
 }
 add_action( 'add_meta_boxes', [ 'rmawp_meta_box', 'add' ] );
-add_action( 'save_post', [ 'rmawp_meta_box', 'save' ] );

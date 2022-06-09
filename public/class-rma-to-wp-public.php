@@ -74,7 +74,7 @@ class Rma_To_Wp_Public {
 		 */
 
 		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/rma-to-wp-public.css', array(), $this->version, 'all' );
-
+		wp_enqueue_style( 'splide-css', 'https://cdn.jsdelivr.net/npm/@splidejs/splide@latest/dist/css/splide.min.css', array(), $this->version, 'all' );
 	}
 
 	/**
@@ -96,7 +96,8 @@ class Rma_To_Wp_Public {
 		 * class.
 		 */
 
-		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/rma-to-wp-public.js', array( 'jquery' ), $this->version, false );
+		wp_enqueue_script( 'splide-js', 'https://cdn.jsdelivr.net/npm/@splidejs/splide@latest/dist/js/splide.min.js', array( 'jquery' ), $this->version, true );
+		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/rma-to-wp-public.js', array( 'jquery' ), $this->version, true );
 
 	}
 

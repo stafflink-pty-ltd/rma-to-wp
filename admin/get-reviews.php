@@ -1,5 +1,12 @@
 <?php
 
+/**
+ *  Insert an image into WordPress as Attachment from URL.
+ *  Since 0.0.1
+ *  
+ *  @param string $image_url    A URL to an image to import.
+ *  @return int $attach_id      The newly created Attachments' WP ID.
+ */
 function upload_image($image_url) {
 
     $image_name = basename( $image_url );
@@ -42,6 +49,12 @@ function upload_image($image_url) {
     return $attach_id;
 }
 
+/**
+ *  Update the Rate My Agent Bearer token if the current one reaches a certain age.
+ *  Since 0.0.1
+ *  
+ *  @return bool 
+ */
 function rmawp_token_update() {
 
 	$time_last_set = get_option('rmawp_temp_token_age');
@@ -79,6 +92,13 @@ function rmawp_token_update() {
 
 }
 
+/**
+ *  I don't quite remember why this is here, but don't delete it.
+ *  Since 0.0.1
+ *  
+ *  @param string $url      A URL to an image to import.
+ *  @return string $id      An ID of some sort.
+ */
 function explode_id($url) {
     $parse = parse_url($url);
     $id = explode('/', $parse['path']);
@@ -86,8 +106,12 @@ function explode_id($url) {
     return $id;
 }
 
-add_action('wp_ajax_nopriv_get_reviews_from_api', 'get_reviews_from_api');
-add_action('wp_ajax_get_reviews_from_api', 'get_reviews_from_api');
+/**
+ *  Get all existing reviews using Bearer token and prime them in the DB to be imported.
+ *  Since 0.0.1
+ *  
+ *  @return bool            Always returns false or runs forever.
+ */
 function get_reviews_from_api() {
 
     global $wpdb;
@@ -128,12 +152,17 @@ function get_reviews_from_api() {
 
         $review_id = explode_id($result->ReviewUrl);
         $json = (array) $result;
-        $json = json_encode($json);
+        $json_response = json_encode($json);
         $like = '%' . $wpdb->esc_like( $review_id ) . '%';
         $result = $wpdb->get_row("SELECT * FROM {$table_name} WHERE review_id LIKE '%".$review_id."%' ");
+        
+        if( !empty($json['Agent']->AgentCode ) ) {
+            $agent_profile_endpoint = 'https://developers.ratemyagent.com.au/agent/'.$json['Agent']->AgentCode.'/profile';
+            $agent_json = wp_remote_retrieve_body(wp_remote_get( $agent_profile_endpoint, $headers ));
+        }
 
         if ( is_null($result) ) {
-            $sync->insert($review_id, $json, 'review', 'pending');
+            $sync->insert($review_id, $json_response, 'review', 'pending', $agent_json);
             $i++;
         }
 
@@ -143,7 +172,7 @@ function get_reviews_from_api() {
     $skip = $skip + $count;
 
     error_log('Priming Reviews: '.$review_count. ' remaining...', 0);
-    if ($review_count == 0) {
+    if ($review_count == 317) { //set to 0 on production. Set to 307 for testing so we don't import too many.
         error_log('All reviews primed in DB. Starting post generation...', 0);
         process_reviews();
         return false;
@@ -159,11 +188,15 @@ function get_reviews_from_api() {
     ]);
 
 }
-
+add_action('wp_ajax_nopriv_get_reviews_from_api', 'get_reviews_from_api');
+add_action('wp_ajax_get_reviews_from_api', 'get_reviews_from_api');
 
 /**
- * Import review data from rmawp_queue DB table into WP posts.
- * Does not accept any arguments.
+ *  Processes primed reviews from the DB. Imports into a custom post type.
+ *  Doesn't accept any parameters.
+ *  Since 0.0.1
+ *  
+ *  @return bool     Only ever returns false. Runs recursively until false.
  */
 function process_reviews() {
     
@@ -177,9 +210,47 @@ function process_reviews() {
 
         $review = (array) $review;
         $json = json_decode( $review['jsonstring'] );
+        $agent_json = json_decode( $review['agent_json'] );
         $attach_id = upload_image($json->PropertyCoverImage);
+        $agent_profile_photo = upload_image($agent_json->Branding->Photo);
+        error_log(print_r($agent_json->Branding, true), );
+
         $meta = [];
-        
+        $agent_meta = [];
+
+        if( !empty($agent_json) ) {
+
+            $existing_agent = get_page_by_title($agent_json->Name, 'OBJECT', 'rma-agents');
+
+            if( $existing_agent == null ) {
+
+                error_log('Agent does not exist. Creating Agent...', 0);
+
+                foreach( $agent_json as $key => $value ) { 
+                    if( is_object($value)) {
+                        foreach($value as $key => $subarray) {
+                            $agent_meta['_rmaAgent_'.$key] = $subarray;
+                        }
+                    } else {
+                        $agent_meta['_rmaAgent_'.$key] = $value; 
+                    } 
+                }
+
+                $agent_post_id = wp_insert_post([
+                    'post_type' => 'rma-agents',
+                    'post_title'    => $agent_json->Name,
+                    'post_content'  => $agent_json->Summary,
+                    'post_status'   => 'publish',
+                    'post_author'   => 1,
+                    'meta_input' => $agent_meta,
+                    '_thumbnail_id' => $agent_profile_photo
+                ]);
+            } else {
+                error_log('Agent Already exists. Skipping...', 0);
+            }
+
+        }
+
         // Add identifier to key and change objects to array's and remove sub arrays
         foreach( $json as $key => $value ) { 
             if( is_object($value)) {
@@ -217,6 +288,7 @@ function process_reviews() {
             }
         }
 
+        // Update the queue so we don't accidentally reimport it.
         $wpdb->update(
             $wpdb->prefix.'rmawp_queue', 
             ['post_id' => $post_id, 'review_modtime' => $json->ReviewedOn, 'status' => 'done'],
