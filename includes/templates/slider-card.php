@@ -18,7 +18,7 @@
                     </h4>
                     <p class="review-count">
                         <a href="<?php echo get_post_meta($agent[0]->ID, '_rmaAgent_RmaAgentProfileUrl', true); ?>" target="_blank">
-                            <?php echo get_post_meta(get_the_ID(), '_rmaAgent_ReviewCount', true); ?> Reviews 
+                            <?php echo get_post_meta($agent[0]->ID, '_rmaAgent_ReviewCount', true); ?> Reviews 
                         </a>
                     </p>
 				</div>
@@ -28,7 +28,7 @@
                 <div class="stars">
                     <?php echo $starlist; ?>
                 </div>
-                <a href="<?php echo get_post_meta(get_the_ID(), '_rmaReview_ReviewUrl', true); ?>" target="_blank"><?php the_title(); ?></a>
+                <a href="<?php echo get_post_meta(get_the_ID(), '_rmaReview_ReviewUrl', true); ?>" target="_blank" class="review-title"><?php the_title(); ?></a>
                 <div class="review-description">
                     <?php the_content(); ?>
                 </div>
