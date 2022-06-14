@@ -146,7 +146,7 @@ class register_custom_content {
 		register_post_type( "rma-reviews", $args );
 
 		/**
-		 * Post Type: RMA Reviews.
+		 * Post Type: RMA Agents.
 		 */
 	
 		$labels = [
@@ -179,6 +179,42 @@ class register_custom_content {
 		];
 	
 		register_post_type( "rma-agents", $args );
+
+		 /**
+		 * Post Type: RMA Properties.
+		 */
+	
+		$labels = [
+			"name" => __( "RMA Properties", "custom-post-type-ui" ),
+			"singular_name" => __( "RMA Property", "custom-post-type-ui" ),
+		];
+	
+		$args = [
+			"label" => __( "RMA Properties", "custom-post-type-ui" ),
+			"labels" => $labels,
+			"description" => "",
+			"public" => true,
+			"publicly_queryable" => true,
+			"show_ui" => true,
+			"show_in_rest" => true,
+			"rest_base" => "",
+			"rest_controller_class" => "WP_REST_Posts_Controller",
+			"has_archive" => false,
+			"show_in_menu" => true,
+			"show_in_nav_menus" => true,
+			"delete_with_user" => false,
+			"exclude_from_search" => false,
+			"capability_type" => "post",
+			"map_meta_cap" => true,
+			"hierarchical" => false,
+			"rewrite" => [ "slug" => "rma-properties", "with_front" => true ],
+			"query_var" => true,
+			"supports" => [ "title", "editor", "thumbnail" ],
+			"show_in_graphql" => false,
+		];
+	
+		register_post_type( "rma-properties", $args );
+		
 	}
 	
 	public function register_taxonomy() {
@@ -218,7 +254,7 @@ class register_custom_content {
 	public function register_review_type() {
 	
 		/**
-		 * Taxonomy: RMA Agents.
+		 * Taxonomy: Review Types.
 		 */
 	
 		$labels = [
