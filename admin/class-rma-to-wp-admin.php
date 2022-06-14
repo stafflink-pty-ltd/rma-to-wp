@@ -316,10 +316,21 @@ add_action( 'admin_init', 'rma_wp_settings_init' );
  * @param array $args  The settings array, defining title, id, callback.
  */
 function rmawp_section_developers_callback( $args ) {
-    ?>
-    <p id="<?php echo esc_attr( $args['id'] ); ?>"><a href="https://go.ratemyagent.com.au/api" target="_blank">Don't have an API key yet? Click here.</a></p>
-	<p><a href="/wp-admin/admin-ajax.php?action=get_reviews_from_api"> Import all reviews</a>
-    <?php
+	$remaining = get_option('rmawp_reviews_remaining');
+	$total = get_option('rmawp_reviews_to_import');
+	$completed = $total - $remaining;
+
+	if ( !is_null($remaining) && $remaining > 0 ) { 
+
+		echo '<img src="'.esc_url( includes_url() . 'js/thickbox/loadingAnimation.gif').'" />';
+		echo '<h4 style="color: #00837b;">Downloading all review data from API. '.$completed.' / '.$total.' imported</h4>';
+		echo '<a href="/wp-admin/admin-ajax.php?action=cancel_reviews_import" class="submitdelete button" style="color: #b32d2e;">Cancel Import</a>';
+	} else { ?>
+
+<p id="<?php echo esc_attr( $args['id'] ); ?>"><a href="https://go.ratemyagent.com.au/api" target="_blank">Don't have an API key yet? Click here.</a></p>
+	<p><a class="button button-primary" href="/wp-admin/admin-ajax.php?action=get_reviews_from_api"> Import all reviews (This may take a while)</a>
+
+	<?php }
 }
 
 function rmawp_client_id_callback( $args ) {

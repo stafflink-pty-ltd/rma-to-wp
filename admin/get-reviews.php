@@ -114,6 +114,15 @@ function explode_id($url) {
  */
 function get_reviews_from_api() {
 
+    if( get_option('rmawp_cancel_reviews_import') == 1 ) {
+        error_log('User cancelled import.', 0);
+        update_option('rmawp_cancel_reviews_import', 0);
+        update_option('rmawp_reviews_to_import', 0);
+        update_option('rmawp_reviews_remaining', 0);
+        wp_redirect( get_site_url() . '/wp-admin/options-general.php?page=rmawp&success=1' );
+        return true;
+    }
+
     global $wpdb;
     rmawp_token_update();
 
@@ -168,24 +177,40 @@ function get_reviews_from_api() {
 
     }
 
+    $review_count_option = get_option('rmawp_reviews_remaining');
+    if ( $review_count_option == 0 ) {
+        update_option('rmawp_reviews_to_import', $review_count);
+    }
+    
     $review_count = $review_count - $count;
     $skip = $skip + $count;
 
+    update_option('rmawp_reviews_remaining', $review_count);
     error_log('Priming Reviews: '.$review_count. ' remaining...', 0);
-    if ($review_count == 317) { //set to 0 on production. Set to 307 for testing so we don't import too many.
+
+    if ($review_count == 0) { //set to 0 on production. Set to 307 for testing so we don't import too many.
         error_log('All reviews primed in DB. Starting post generation...', 0);
         process_reviews();
         return false;
     }
 
-    wp_remote_post( admin_url('admin-ajax.php?action=get_reviews_from_api'), [
+    $remote_post = wp_remote_post( admin_url('admin-ajax.php?action=get_reviews_from_api'), [
         'blocking' => false, 
         'sslverify' => false,
         'body' => [
             'skip' => $skip,
             'review_count' => $review_count
-        ]
+        ],
+
     ]);
+
+    if ( is_wp_error( $response ) ) {
+        $error_message = $response->get_error_message();
+        echo "Something went wrong. Most likely your API key is entered incorrectly. Please double check it. " . $error_message;
+    } else {
+        wp_redirect( get_site_url() . '/wp-admin/options-general.php?page=rmawp' );
+        exit;
+    }
 
 }
 add_action('wp_ajax_nopriv_get_reviews_from_api', 'get_reviews_from_api');
@@ -213,7 +238,6 @@ function process_reviews() {
         $agent_json = json_decode( $review['agent_json'] );
         $attach_id = upload_image($json->PropertyCoverImage);
         $agent_profile_photo = upload_image($agent_json->Branding->Photo);
-        error_log(print_r($agent_json->Branding, true), );
 
         $meta = [];
         $agent_meta = [];
@@ -327,3 +351,15 @@ add_action('wp_ajax_process_reviews', 'process_reviews');
  * 
  *              
  */
+
+function cancel_reviews_import() {
+    update_option('rmawp_cancel_reviews_import', 1);
+    update_option('rmawp_reviews_to_import', 0);
+    update_option('rmawp_reviews_remaining', 0);
+    wp_redirect( get_site_url() . '/wp-admin/options-general.php?page=rmawp' );
+    exit;
+}
+
+add_action('wp_ajax_nopriv_cancel_reviews_import', 'cancel_reviews_import');
+add_action('wp_ajax_cancel_reviews_import', 'cancel_reviews_import');
+

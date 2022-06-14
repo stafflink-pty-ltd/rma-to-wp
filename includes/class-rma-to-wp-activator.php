@@ -37,6 +37,15 @@ class Rma_To_Wp_Activator {
 		if(!get_option('rmawp_temp_token')){
 			add_option('rmawp_temp_token', 0 );
 		}
+		if(!get_option('rmawp_reviews_remaining')){
+			add_option('rmawp_reviews_remaining', 0 );
+		}
+		if(!get_option('rmawp_reviews_to_import')){
+			add_option('rmawp_reviews_to_import', 0 );
+		}
+		if(!get_option('rmawp_cancel_reviews_import')){
+			add_option('rmawp_cancel_reviews_import', false );
+		}
 	}
 
 }
