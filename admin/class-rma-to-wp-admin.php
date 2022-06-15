@@ -249,6 +249,97 @@ class register_custom_content {
 			"show_in_graphql" => false,
 		];
 		register_taxonomy( "rma_agent", [ "rma-reviews" ], $args );
+
+		 /**
+		 * Taxonomy: RMA Property Types.
+		 */
+	
+		$labels = [
+			"name" => __( "Property Types", "custom-post-type-ui" ),
+			"singular_name" => __( "Property Type", "custom-post-type-ui" ),
+		];
+	
+		
+		$args = [
+			"label" => __( "Property Types", "custom-post-type-ui" ),
+			"labels" => $labels,
+			"public" => false,
+			"publicly_queryable" => false,
+			"hierarchical" => false,
+			"show_ui" => true,
+			"show_in_menu" => true,
+			"show_in_nav_menus" => false,
+			"query_var" => true,
+			"rewrite" => [ 'slug' => 'rma_property_type', 'with_front' => true, ],
+			"show_admin_column" => false,
+			"show_in_rest" => true,
+			"show_tagcloud" => false,
+			"rest_base" => "rma_property",
+			"rest_controller_class" => "WP_REST_Terms_Controller",
+			"show_in_quick_edit" => false,
+			"show_in_graphql" => false,
+		];
+		register_taxonomy( "rma_property_type", [ "rma-properties" ], $args );
+
+		 /**
+		 * Taxonomy: RMA Property Statuses.
+		 */
+	
+		$labels = [
+			"name" => __( "Property Statuses", "custom-post-type-ui" ),
+			"singular_name" => __( "Property Status", "custom-post-type-ui" ),
+		];
+		
+		$args = [
+			"label" => __( "Property Statuses", "custom-post-type-ui" ),
+			"labels" => $labels,
+			"public" => false,
+			"publicly_queryable" => false,
+			"hierarchical" => false,
+			"show_ui" => true,
+			"show_in_menu" => true,
+			"show_in_nav_menus" => false,
+			"query_var" => true,
+			"rewrite" => [ 'slug' => 'rma_property_status', 'with_front' => true, ],
+			"show_admin_column" => false,
+			"show_in_rest" => true,
+			"show_tagcloud" => false,
+			"rest_base" => "rma_property",
+			"rest_controller_class" => "WP_REST_Terms_Controller",
+			"show_in_quick_edit" => false,
+			"show_in_graphql" => false,
+		];
+		register_taxonomy( "rma_property_status", [ "rma-properties" ], $args );
+
+		 /**
+		 * Taxonomy: RMA Property Suburbs.
+		 */
+	
+		$labels = [
+			"name" => __( "Property Suburbs", "custom-post-type-ui" ),
+			"singular_name" => __( "Property Suburbs", "custom-post-type-ui" ),
+		];
+		
+		$args = [
+			"label" => __( "Property Suburbs", "custom-post-type-ui" ),
+			"labels" => $labels,
+			"public" => false,
+			"publicly_queryable" => false,
+			"hierarchical" => false,
+			"show_ui" => true,
+			"show_in_menu" => true,
+			"show_in_nav_menus" => false,
+			"query_var" => true,
+			"rewrite" => [ 'slug' => 'rma_property_suburbs', 'with_front' => true, ],
+			"show_admin_column" => false,
+			"show_in_rest" => true,
+			"show_tagcloud" => false,
+			"rest_base" => "rma_property",
+			"rest_controller_class" => "WP_REST_Terms_Controller",
+			"show_in_quick_edit" => false,
+			"show_in_graphql" => false,
+		];
+		register_taxonomy( "rma_property_suburbs", [ "rma-properties" ], $args );
 	}
 
 	public function register_review_type() {
@@ -354,7 +445,8 @@ add_action( 'admin_init', 'rma_wp_settings_init' );
 function rmawp_section_developers_callback( $args ) {
     ?>
     <p id="<?php echo esc_attr( $args['id'] ); ?>"><a href="https://go.ratemyagent.com.au/api" target="_blank">Don't have an API key yet? Click here.</a></p>
-	<p><a href="/wp-admin/admin-ajax.php?action=get_reviews_from_api"> Import all reviews</a>
+	<p><a href="/wp-admin/admin-ajax.php?action=get_reviews_from_api"> Import all reviews</a></p>
+	<p><a href="/wp-admin/admin-ajax.php?action=get_properties_from_api"> Import all properties</a></p>
     <?php
 }
 

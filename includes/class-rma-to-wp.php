@@ -120,6 +120,8 @@ class Rma_To_Wp {
 		 * Custom functions
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/get-reviews.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/get-properties.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/utilities.php';
 		
 		/**
 		 * The class responsible for defining all actions that occur in the public-facing
@@ -128,6 +130,8 @@ class Rma_To_Wp {
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-rma-to-wp-public.php';
 
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-rma-to-wp-queue.php';
+
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-rma-to-wp-property-queue.php';
 
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/slider-review-shortcode.php';
 

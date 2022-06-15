@@ -26,4 +26,22 @@ $sql =
          )
          COLLATE {$wpdb_collate}";
 
+
+$table_name = $wpdb->prefix . 'rmawp_property_queue';
+$sql =
+    "CREATE TABLE {$table_name} (
+         `id` int(10) NOT NULL AUTO_INCREMENT,
+          `property_id` text NOT NULL,
+          `post_id` int(10) NULL,
+          `property_modtime` int(20) NULL,
+          `jsonstring` longtext NULL,
+          `agent_json` longtext NULL,
+          `date_created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          `type` enum('Active', 'Sold', 'Withdrawn') DEFAULT NULL,
+          `status` enum('cancel', 'fail', 'pending','done') DEFAULT NULL,
+          `suburb` text NULL,
+          `status_message` text NULL, 
+         PRIMARY KEY  (id)
+         )
+         COLLATE {$wpdb_collate}";
 dbDelta( $sql );
